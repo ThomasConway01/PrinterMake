@@ -140,13 +140,6 @@ See `Server/WINDOWS_SERVER_INSTALLATION.md` for:
 - **Cyberpunk UI Mode** - Retro terminal aesthetic
 - **Cross-platform** - Windows, Linux, macOS
 
-### Web Interface
-- **Interactive Demo** - Real-time chat simulation
-- **Modern Design** - Professional dark theme
-- **Responsive Layout** - Works on desktop and mobile
-- **About Us Section** - Explains our privacy philosophy
-- **Developer Portfolio** - Links to Thomas Conway's portfolio
-
 ### Security Features
 - **Quantum-Resistant Encryption** - Future-proof security
 - **End-to-End Communication** - No server-side decryption
@@ -185,10 +178,7 @@ msg username message  # Send direct message
 ```
 
 ### Web Interface
-1. **Open** `Web/index.html` in your browser
-2. **Test** the interactive chat demo
-3. **Try** the cyberpunk mode toggle
-4. **Explore** all features and functionality
+The web interface is not included in this repository. For the web interface, use the production version or create your own based on the server API.
 
 ## 🔍 Testing
 
@@ -267,7 +257,7 @@ You just can't hold us liable if something goes wrong.
 ## 🚀 Production Deployment
 
 ### Domain Configuration
-Ready for deployment to **printermake.online**:
+Ready for deployment to **printermake.com**:
 - ✅ **DNS Configuration** - Complete GoDaddy setup guide
 - ✅ **SSL Certificates** - Let's Encrypt automation
 - ✅ **Nginx Configuration** - Web server and WebSocket proxy

@@ -111,7 +111,7 @@ class SecurityManager:
             return False
 
 class PrinterMakeServer:
-    def __init__(self, host: str = "0.0.0.0", port: int = 443):
+    def __init__(self, host: str = "0.0.0.0", port: int = 8765):
         self.host = host
         self.port = port
         self.clients: Dict[str, websockets.WebSocketServerProtocol] = {}
@@ -119,9 +119,11 @@ class PrinterMakeServer:
         self.rooms: Dict[str, Set[str]] = {"general": set(), "main": set()}
         self.messages: List[Message] = []
         self.security = SecurityManager()
-        self.db_path = "printermake_data.db"
-        self.admin_password = os.environ.get('PRINTERMAKE_ADMIN', secrets.token_hex(16))
-        self.jwt_secret = os.environ.get('PRINTERMAKE_JWT_SECRET', secrets.token_hex(32))
+        
+        # Generic configuration for self-hosting
+        self.db_path = "chat_data.db"  # Generic database name
+        self.admin_password = os.environ.get('CHAT_ADMIN', secrets.token_hex(16))
+        self.jwt_secret = os.environ.get('CHAT_JWT_SECRET', secrets.token_hex(32))
         self.init_database()
         
     def init_database(self):
@@ -594,7 +596,7 @@ class PrinterMakeServer:
                 
                 await websocket.send(json.dumps({
                     "status": "success",
-                    "message": "Connected to PrinterMake"
+                    "message": "Connected to secure chat server"
                 }))
             
             else:
@@ -610,50 +612,49 @@ class PrinterMakeServer:
             }))
     
     async def start(self):
-        """Start the secure WebSocket server"""
-        logger.info(f"Starting PrinterMake server on {self.host}:{self.port}")
-        logger.info(f"Admin password: {self.admin_password}")
-        logger.info("Security features: IP blocking, rate limiting, input validation")
+        """Start the secure WebSocket chat server"""
+        logger.info(f"🚀 Starting secure chat server on {self.host}:{self.port}")
+        logger.info(f"👤 Admin password: {self.admin_password}")
+        logger.info(f"🗄️ Database: {self.db_path}")
+        logger.info("🛡️ Security features: IP blocking, rate limiting, input validation")
         
         try:
-            # For production, you would use SSL here
-            # ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            # ssl_context.load_cert_chain('cert.pem', 'key.pem')
-            # server = await websockets.serve(self.handle_client, self.host, self.port, ssl=ssl_context)
-            
+            # Start WebSocket server
             server = await websockets.serve(self.handle_client, self.host, self.port)
-            logger.info("PrinterMake server started successfully")
-            logger.info(f"Server accessible on:")
-            logger.info(f"  Local: ws://localhost:{self.port}")
-            logger.info(f"  Network: ws://{self.host}:{self.port}")
-            logger.info("Ready for printermake.online deployment!")
+            logger.info("✅ Chat server started successfully!")
+            logger.info(f"🌐 Server accessible on:")
+            logger.info(f"  📍 Local: ws://localhost:{self.port}")
+            logger.info(f"  📍 Network: ws://{self.host}:{self.port}")
+            logger.info("🎯 Ready for connections!")
             await server.wait_closed()
         except Exception as e:
-            logger.error(f"Failed to start server: {e}")
+            logger.error(f"❌ Failed to start server: {e}")
             raise
 
 def main():
-    """Main entry point"""
+    """Main entry point for secure chat server"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="PrinterMake - Secure Encrypted Chat Server")
+    parser = argparse.ArgumentParser(description="Secure Encrypted Chat Server - Self-Hosting")
     parser.add_argument("--host", default="0.0.0.0", help="Server host (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=443, help="Server port (default: 443 for HTTPS)")
-    parser.add_argument("--dev", action="store_true", help="Development mode (HTTP)")
+    parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
+    parser.add_argument("--db", default="chat_data.db", help="Database file (default: chat_data.db)")
     
     args = parser.parse_args()
     
-    if args.dev:
-        args.port = 8765
-    
     server = PrinterMakeServer(host=args.host, port=args.port)
+    server.db_path = args.db  # Allow custom database path
     
     try:
+        logger.info("=" * 50)
+        logger.info("🚀 SECURE CHAT SERVER STARTING")
+        logger.info("=" * 50)
         asyncio.run(server.start())
     except KeyboardInterrupt:
-        logger.info("PrinterMake server stopped by user")
+        logger.info("🛑 Chat server stopped by user")
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        logger.error(f"❌ Server error: {e}")
+        raise
 
 if __name__ == "__main__":
     main()

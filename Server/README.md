@@ -1,14 +1,14 @@
-# 🔒 PrinterMake Server - Production Deployment
+# 🔒 PrinterMake Server - Open Source
 
 [![Security](https://img.shields.io/badge/Security-Quantum--Resistant-blue.svg)](#)
-[![Server](https://img.shields.io/badge/Server-Production-green.svg)](#)
-[![Domain](https://img.shields.io/badge/Domain-printermake.online-orange.svg)](#)
+[![Server](https://img.shields.io/badge/Server-Open--Source-green.svg)](#)
+[![License](https://img.shields.io/badge/License-MIT-orange.svg)](#)
 
-> **Production-ready server deployment for printermake.online with quantum-resistant encryption**
+> **Open-source self-hosted server for PrinterMake with quantum-resistant encryption**
 
 ## 🚀 Overview
 
-This folder contains the complete **PrinterMake server deployment** for your **printermake.online** domain. It includes quantum-resistant encryption, web interface, and complete server setup.
+This folder contains the **open-source PrinterMake server** that users can run on their own servers. It includes quantum-resistant encryption, complete setup guides, and self-hosting capabilities.
 
 ## 📁 Contents
 
@@ -30,34 +30,26 @@ This folder contains the complete **PrinterMake server deployment** for your **p
 
 ## 🔐 Security Features
 
-### Quantum-Resistant Encryption
-- **X25519** - Quantum-resistant key exchange
-- **AES-256-GCM** - Symmetric encryption with authentication
-- **SHA-3** - Quantum-resistant hashing
-- **Perfect Forward Secrecy** - Session-specific keys
-- **Zero-Knowledge Architecture** - Server never sees content
-
 ### Security Protection
-- **Rate Limiting** - DDoS protection (100 requests/minute)
+- **Rate Limiting** - DDoS protection
 - **IP Blocking** - Automatic and manual protection
 - **Input Validation** - SQL injection and XSS prevention
 - **Audit Logging** - Complete security event tracking
 
-## 🌐 Domain: printermake.online
+## 🌐 Self-Hosting Setup
 
-This server is configured for deployment to **printermake.online** with:
+This server can be deployed on any domain or subdomain you own:
 
-### Subdomain Strategy
-- **printermake.online** - Main website
-- **demo.printermake.online** - Interactive demo
-- **ws.printermake.online** - WebSocket server
-- **api.printermake.online** - REST API
+### Recommended Domain Structure
+- **your-domain.com** - Main website
+- **chat.your-domain.com** - WebSocket server
+- **api.your-domain.com** - REST API (future)
 
 ### SSL & Security
-- **Let's Encrypt** - Automatic SSL certificate
-- **HTTPS Only** - All connections encrypted
+- **Let's Encrypt** - Automatic SSL certificate (recommended)
+- **HTTPS/WSS** - All connections encrypted
 - **Security Headers** - XSS, clickjacking, and injection protection
-- **Nginx** - Web server and reverse proxy
+- **Nginx** - Web server and reverse proxy (recommended)
 
 ## 🛠️ Quick Deployment
 
@@ -66,22 +58,24 @@ See `LINUX_SERVER_INSTALLATION.md` for complete setup guide.
 
 **Quick Start:**
 ```bash
-# 1. Copy files to your server
-scp -r . user@your-server:/home/user/printermake/
+# 1. Download and extract files
+git clone https://github.com/your-username/printermake.git
+cd printermake/Server
 
-# 2. On your server
-cd printermake
-chmod +x install.sh
-sudo ./install.sh
+# 2. Install dependencies
+pip install -r requirements.txt
 
-# 3. Access at: https://printermake.online
+# 3. Start the server
+python server.py
+
+# 4. Connect clients to: ws://localhost:8765
 ```
 
 ### Prerequisites
-- **Linux Mint** (any recent version)
-- **Python 3.11+**
-- **Port 80, 443, 8765** available
-- **Domain configured** for printermake.online
+- **Any OS** (Linux, Windows, macOS)
+- **Python 3.8+**
+- **Port 8765** available (or choose different port)
+- **Optional**: Domain configured for your use
 
 ## 📋 Features
 
@@ -99,57 +93,39 @@ sudo ./install.sh
 - **Download Links** - Direct access to clients
 - **Responsive Layout** - Desktop and mobile
 
-### Quantum Cryptography
-- **Test Suite** - Built-in quantum encryption tests
-- **Performance** - Optimized for speed and security
-- **Fallbacks** - Works with or without cryptography library
-- **Logging** - Complete security event tracking
+### Database & Storage
+- **SQLite** - Lightweight, serverless database
+- **Message History** - Persistent chat logs
+- **User Management** - Registration and authentication
+- **Secure Storage** - Encrypted data at rest
 
 ## 🔍 Testing
 
-### Test Quantum Cryptography
-```bash
-python quantum_crypto.py
-```
-
-**Expected Output:**
-```
-SUCCESS: All quantum cryptography tests passed!
-ENCRYPTION: Message encrypted with: AES-256-GCM
-QUANTUM: Quantum-resistant: True
-```
-
-### Test Web Interface
-1. **Open** `index.html` in your browser
-2. **Test** the interactive chat demo
-3. **Try** the cyberpunk mode toggle
-4. **Verify** all buttons and features work
-
-### Test Server Components
+### Test Server Startup
 ```bash
 # Test server startup
 python server.py
 
 # Check dependencies
 pip install -r requirements.txt
+
+# Test with custom port
+python server.py --port 8080
 ```
 
-## 🌐 Production Deployment
-
-### Domain Configuration
-See the main **DOMAIN_INSTALLATION_GUIDE.md** for complete domain setup.
+## 🌐 Self-Hosting Deployment
 
 ### Server Requirements
-- **OS**: Linux Mint or Ubuntu 20.04+
-- **RAM**: 2GB minimum, 4GB recommended
-- **Storage**: 20GB+ free space
-- **Network**: High-speed internet connection
+- **OS**: Any modern OS (Linux, Windows, macOS)
+- **RAM**: 1GB minimum, 2GB recommended
+- **Storage**: 1GB+ free space
+- **Network**: Internet connection for client access
 
-### Service Management
-- **Systemd** - Automatic startup and restart
-- **Health Monitoring** - Automated service checks
-- **Log Rotation** - Automatic log management
-- **Backup System** - Daily database and config backups
+### Service Management (Linux)
+- **Systemd** - Automatic startup and restart (optional)
+- **PM2** - Process management for Node.js style deployment (optional)
+- **Log Rotation** - Automatic log management (optional)
+- **Backup System** - Daily database backups (recommended)
 
 ## 🔧 Configuration
 
