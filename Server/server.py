@@ -15,6 +15,8 @@ import secrets
 import ssl
 import ipaddress
 import re
+import aiohttp
+import socket
 from datetime import datetime, timedelta
 from typing import Dict, Set, List, Optional
 from dataclasses import dataclass
@@ -631,25 +633,188 @@ class PrinterMakeServer:
             logger.error(f"❌ Failed to start server: {e}")
             raise
 
+def get_external_ip():
+    """Get the external IP address"""
+    try:
+        # Try multiple services for reliability
+        services = [
+            "https://api.ipify.org?format=json",
+            "https://ipinfo.io/json",
+            "https://api.my-ip.io/ip"
+        ]
+        
+        for service in services:
+            try:
+                with aiohttp.ClientSession() as session:
+                    response = asyncio.run(session.get(service, timeout=5))
+                    if response.status == 200:
+                        data = asyncio.run(response.json())
+                        if 'ip' in data:
+                            return data['ip']
+                        elif 'ip' in data:  # ipinfo format
+                            return data['ip']
+            except:
+                continue
+        
+        # Fallback: try to get local IP and check if it's public
+        try:
+            # Get local IP by connecting to a remote server
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            
+            # Check if it's a public IP
+            ip_obj = ipaddress.ip_address(local_ip)
+            if not (ip_obj.is_private or ip_obj.is_loopback):
+                return local_ip
+        except:
+            pass
+            
+        return None
+    except Exception as e:
+        logger.warning(f"Could not get external IP: {e}")
+        return None
+
+async def check_port_forwarding(external_ip: str, port: int) -> bool:
+    """Check if port forwarding is properly configured"""
+    if not external_ip:
+        return False
+    
+    try:
+        # Try to connect to the external IP and port
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(external_ip, port),
+            timeout=3
+        )
+        writer.close()
+        await writer.wait_closed()
+        return True
+    except:
+        return False
+
+async def start_server_with_detection(host: str = "0.0.0.0", port: int = 8765):
+    """Start server with port forwarding detection"""
+    server = PrinterMakeServer(host=host, port=port)
+    
+    logger.info("=" * 60)
+    logger.info("🚀 SECURE CHAT SERVER WITH PORT FORWARDING DETECTION")
+    logger.info("=" * 60)
+    
+    # Check if port is already in use
+    try:
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        test_socket.bind((host, port))
+        test_socket.close()
+    except OSError as e:
+        if e.errno == 10048:  # Port already in use
+            logger.error("=" * 60)
+            logger.error("❌ PORT ALREADY IN USE")
+            logger.error("=" * 60)
+            logger.error(f"Port {port} is already being used by another process.")
+            logger.error("")
+            logger.error("SOLUTIONS:")
+            logger.error("1. Close any other instances of this server")
+            logger.error("2. Use a different port: python server.py --port 8766")
+            logger.error("3. On Windows: Check Task Manager for Python processes")
+            logger.error("4. On Linux/Mac: Use 'lsof -i :8765' to find the process")
+            logger.error("")
+            logger.error("Note: Each server instance needs its own port!")
+            return
+        else:
+            logger.error(f"❌ Failed to bind to port {port}: {e}")
+            return
+    
+    # Get local IP
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except:
+        local_ip = host
+    
+    # Get external IP and check port forwarding
+    logger.info("🔍 Detecting network configuration...")
+    logger.info("-" * 60)
+    
+    external_ip = await asyncio.get_event_loop().run_in_executor(None, get_external_ip)
+    
+    if external_ip:
+        logger.info(f"🌐 External IP: {external_ip}")
+        logger.info(f"🏠 Local IP: {local_ip}")
+        
+        # Check if local IP is the same as external (direct connection)
+        if local_ip == external_ip:
+            logger.info("✅ Direct internet connection detected")
+        else:
+            logger.info("🔄 NAT detected (router/firewall)")
+        
+        # Check port forwarding
+        logger.info(f"🔍 Checking port forwarding for port {port}...")
+        is_forwarded = await check_port_forwarding(external_ip, port)
+        
+        if is_forwarded:
+            logger.info("✅ Port forwarding is working!")
+            logger.info("=" * 60)
+            logger.info("🌍 SERVER IS ACCESSIBLE FROM THE INTERNET!")
+            logger.info("=" * 60)
+            logger.info(f"📡 External Access: ws://{external_ip}:{port}")
+            logger.info(f"🏠 Local Access: ws://{local_ip}:{port}")
+            logger.info(f"🔗 Share this address with friends: ws://{external_ip}:{port}")
+            logger.info("=" * 60)
+        else:
+            logger.warning("❌ Port forwarding is NOT working")
+            logger.warning("=" * 60)
+            logger.error("🔒 SERVER IS ONLY ACCESSIBLE ON LOCAL NETWORK")
+            logger.error("=" * 60)
+            logger.info("📍 Local Access: ws://" + local_ip + ":" + str(port))
+            logger.error("🌍 External Access: NOT AVAILABLE")
+            logger.info("")
+            logger.info("TO ENABLE INTERNET ACCESS:")
+            logger.info("1. Configure port forwarding on your router:")
+            logger.info(f"   - External Port: {port}")
+            logger.info(f"   - Internal IP: {local_ip}")
+            logger.info(f"   - Internal Port: {port}")
+            logger.info("   - Protocol: TCP")
+            logger.info("")
+            logger.info("2. Check your router's admin panel (usually 192.168.1.1)")
+            logger.info("3. Look for 'Port Forwarding' or 'Virtual Server' settings")
+            logger.info("4. Make sure Windows Firewall allows the port")
+            logger.info("=" * 60)
+    else:
+        logger.warning("⚠️ Could not detect external IP")
+        logger.info("📍 Local Access: ws://" + local_ip + ":" + str(port))
+        logger.info("🌍 External Access: UNKNOWN (check manually)")
+        logger.info("")
+        logger.info("If you have internet, your friends can try:")
+        logger.info(f"ws://[YOUR_PUBLIC_IP]:{port}")
+        logger.info("(Find your public IP at whatismyipaddress.com)")
+        logger.info("=" * 60)
+    
+    # Start the actual server
+    try:
+        await server.start()
+    except KeyboardInterrupt:
+        logger.info("🛑 Chat server stopped by user")
+    except Exception as e:
+        logger.error(f"❌ Server error: {e}")
+        raise
+
 def main():
     """Main entry point for secure chat server"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Secure Encrypted Chat Server - Self-Hosting")
+    parser = argparse.ArgumentParser(description="Secure Encrypted Chat Server - Self-Hosting with Port Forwarding Detection")
     parser.add_argument("--host", default="0.0.0.0", help="Server host (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
     parser.add_argument("--db", default="chat_data.db", help="Database file (default: chat_data.db)")
     
     args = parser.parse_args()
     
-    server = PrinterMakeServer(host=args.host, port=args.port)
-    server.db_path = args.db  # Allow custom database path
-    
     try:
-        logger.info("=" * 50)
-        logger.info("🚀 SECURE CHAT SERVER STARTING")
-        logger.info("=" * 50)
-        asyncio.run(server.start())
+        asyncio.run(start_server_with_detection(args.host, args.port))
     except KeyboardInterrupt:
         logger.info("🛑 Chat server stopped by user")
     except Exception as e:
